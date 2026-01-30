@@ -79,7 +79,7 @@ To install casks or formulae that download from private GitHub repositories, you
 
 ## Automated Updates
 
-This repository includes a GitHub Actions workflow for automatically updating formula and cask URLs and SHA256 hashes.
+This repository includes a GitHub Actions workflow for automatically updating formula and cask versions, URLs, and SHA256 hashes.
 
 ### Using the Update Workflow
 
@@ -89,18 +89,21 @@ To update a formula or cask:
 2. Click "Run workflow"
 3. Provide the required inputs:
    - **name**: The name of the formula or cask (without `.rb` extension), e.g., `sysupdate` or `pingmeter`
+   - **version**: The new version in format `v0.0.0`, e.g., `v1.2.3`
    - **url**: The new download URL
    - **sha256**: The new SHA256 hash of the download file
 4. Click "Run workflow"
 
 The workflow will automatically:
 - Detect whether the file is a formula or cask
+- Update the version field (strips the `v` prefix)
 - Update the URL and SHA256 fields
 - Preserve the file's formatting and indentation
 - Commit and push the changes to the main branch
 
 **Example:**
 - Name: `sysupdate`
+- Version: `v0.0.2`
 - URL: `https://github.com/uatec/sysupdate/releases/download/v0.0.2/sysupdate-osx-arm64.zip`
 - SHA256: `abc123def456...` (64-character hexadecimal string)
 
