@@ -3,7 +3,6 @@
 # Script to generate a GitHub Personal Access Token creation URL
 # with prepopulated description and required permissions
 
-SERVICE_NAME="uatec-homebrew-tools-github-token"
 DESCRIPTION="Homebrew%20Tools%20Tap%20(uatec-homebrew-tools-github-token)"
 SCOPES="repo"
 
@@ -26,11 +25,33 @@ if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 fi
 
 if [[ "$1" == "--copy" ]]; then
-  echo "$TOKEN_URL" | pbcopy
-  echo "✅ URL copied to clipboard!"
-  echo ""
-  echo "The URL has been copied to your clipboard."
-  echo "Paste it into your browser to create a new GitHub Personal Access Token."
+  # Check if more than one argument was provided
+  if [[ $# -gt 1 ]]; then
+    echo "Error: Too many arguments. Use --help for usage information."
+    exit 1
+  fi
+  
+  # Check if pbcopy is available (macOS)
+  if ! command -v pbcopy &> /dev/null; then
+    echo "Error: pbcopy command not found. The --copy option is only available on macOS."
+    echo "URL: $TOKEN_URL"
+    exit 1
+  fi
+  
+  if echo "$TOKEN_URL" | pbcopy; then
+    echo "✅ URL copied to clipboard!"
+    echo ""
+    echo "The URL has been copied to your clipboard."
+    echo "Paste it into your browser to create a new GitHub Personal Access Token."
+  else
+    echo "❌ Failed to copy URL to clipboard."
+    echo "URL: $TOKEN_URL"
+    exit 1
+  fi
+elif [[ -n "$1" ]]; then
+  # Unknown argument provided
+  echo "Error: Unknown argument '$1'. Use --help for usage information."
+  exit 1
 else
   echo "$TOKEN_URL"
 fi
