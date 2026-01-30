@@ -1,6 +1,6 @@
 require "download_strategy"
-require "utils/github"
 require "net/http"
+require "json"
 
 class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
   def initialize(url, name, version, **meta)
@@ -21,13 +21,19 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
     uri = URI("https://api.github.com/repos/#{@owner}/#{@repo}/releases/assets/#{asset_id}")
     req = Net::HTTP::Get.new(uri)
     req["Accept"] = "application/octet-stream"
-    req["Authorization"] = "token #{github_token}"
+    req["Authorization"] = "Bearer #{github_token}"
 
-    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
       http.request(req)
     end
 
-    res["location"]
+    if res["location"]
+      res["location"]
+    else
+      raise CurlDownloadStrategyError, "Failed to get download URL: #{res.code} #{res.message}"
+    end
+  rescue StandardError => e
+    raise CurlDownloadStrategyError, "Failed to get download URL: #{e.message}"
   end
 
   private
@@ -52,7 +58,25 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
 
   def fetch_release_metadata
     release_url = "https://api.github.com/repos/#{@owner}/#{@repo}/releases/tags/#{@tag}"
-    GitHub.open_api(release_url)
+    uri = URI(release_url)
+    req = Net::HTTP::Get.new(uri)
+    req["Accept"] = "application/vnd.github+json"
+    req["Authorization"] = "Bearer #{github_token}"
+    req["X-GitHub-Api-Version"] = "2022-11-28"
+
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      http.request(req)
+    end
+
+    unless res.is_a?(Net::HTTPSuccess)
+      raise CurlDownloadStrategyError, "GitHub API request failed: #{res.code} #{res.message}"
+    end
+
+    JSON.parse(res.body)
+  rescue JSON::ParserError => e
+    raise CurlDownloadStrategyError, "Failed to parse GitHub API response: #{e.message}"
+  rescue StandardError => e
+    raise CurlDownloadStrategyError, "Failed to fetch release metadata: #{e.message}"
   end
 
   def github_token
