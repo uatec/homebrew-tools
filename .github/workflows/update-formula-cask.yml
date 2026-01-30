@@ -25,6 +25,22 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Validate inputs
+        run: |
+          # Validate SHA256 format (must be 64 hex characters)
+          if ! echo "${{ inputs.sha256 }}" | grep -qE '^[a-fA-F0-9]{64}$'; then
+            echo "Error: SHA256 must be a 64-character hexadecimal string"
+            echo "Provided: ${{ inputs.sha256 }}"
+            exit 1
+          fi
+          
+          # Validate URL format (basic check)
+          if ! echo "${{ inputs.url }}" | grep -qE '^https?://'; then
+            echo "Error: URL must start with http:// or https://"
+            echo "Provided: ${{ inputs.url }}"
+            exit 1
+          fi
+
       - name: Detect file type and update
         run: |
           # Check if it's a formula
@@ -43,13 +59,24 @@ jobs:
           # Create a backup
           cp "$FILE_PATH" "$FILE_PATH.bak"
           
-          # Update URL - this handles both single line and multi-line url declarations
-          # The regex captures everything after 'url "' and replaces it with the new URL
-          # It preserves any trailing content on the same line (like commas)
-          sed -i 's|^\( *url \)"[^"]*"\(.*\)|  url "${{ inputs.url }}"\2|' "$FILE_PATH"
+          # Escape special characters in the URL for sed (escape &, \, and /)
+          ESCAPED_URL=$(echo "${{ inputs.url }}" | sed 's/[&/\]/\\&/g')
           
-          # Update SHA256
-          sed -i 's/^\( *sha256 \)"[^"]*"/  sha256 "${{ inputs.sha256 }}"/' "$FILE_PATH"
+          # Update URL - this handles both single line and multi-line url declarations
+          # The regex captures the indentation and everything after the closing quote
+          # It preserves any trailing content on the same line (like commas)
+          sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
+          
+          # Update SHA256 - preserve original indentation
+          sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${{ inputs.sha256 }}\"/" "$FILE_PATH"
+          
+          # Verify changes were made
+          if diff -q "$FILE_PATH.bak" "$FILE_PATH" > /dev/null; then
+            echo "Warning: No changes were made to the file."
+            echo "This might indicate that the sed patterns didn't match the file format."
+            cat "$FILE_PATH"
+            exit 1
+          fi
           
           # Show the changes
           echo "Changes made:"
@@ -58,10 +85,17 @@ jobs:
           # Clean up backup
           rm "$FILE_PATH.bak"
 
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
           git commit -m "Update ${{ inputs.name }}: url and sha256"
           git push
