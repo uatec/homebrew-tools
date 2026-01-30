@@ -50,7 +50,9 @@ To install casks or formulae that download from private GitHub repositories, you
 ## Available Formulae
 
 <!-- Add your formulae here -->
-- None yet
+- `secure-tap-access`: Helper to setup authenticated access for uatec/tools tap
+- `sysupdate`: Tool for managing many different software update mechanisms
+
 
 ## Available Casks
 
