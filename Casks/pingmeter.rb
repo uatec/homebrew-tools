@@ -9,6 +9,12 @@ cask "pingmeter" do
 
   app "PingMeter.app"
 
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-r", "-d", "com.apple.quarantine", "#{appdir}/PingMeter.app"],
+                   sudo: true
+  end
+
   zap trash: [
     "~/Library/Application Support/PingMeter",
     "~/Library/Preferences/io.uatec.pingmeter.plist",
