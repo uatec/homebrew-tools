@@ -22,6 +22,31 @@ brew install uatec/tools/<formula>
 brew install --cask uatec/tools/<cask>
 ```
 
+## Private Repositories
+
+To install casks or formulae that download from private GitHub repositories, you must first set up your GitHub Personal Access Token.
+
+1.  Create a [GitHub Personal Access Token](https://github.com/settings/tokens) (classic) with `repo` scope.
+2.  Install and run the helper tool to save it to your Keychain:
+
+    ```bash
+    brew install uatec/tools/secure-tap-access
+    secure-tap-access
+    ```
+
+3.  In your Cask or Formula, require the strategy and use it:
+
+    ```ruby
+    require_relative "../lib/private_strategy"
+
+    cask "example" do
+      # ...
+      url "https://github.com/user/private-repo/releases/download/v1.0.0/app.zip",
+          using: PrivateGitHubDownloadStrategy
+      # ...
+    end
+    ```
+
 ## Available Formulae
 
 <!-- Add your formulae here -->

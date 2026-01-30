@@ -1,0 +1,44 @@
+#!/bin/bash
+
+SERVICE_NAME="uatec-homebrew-tools-github-token"
+
+if [[ "$1" == "--help" ]]; then
+  echo "Usage: secure-tap-access"
+  echo ""
+  echo "Prompts for a GitHub Personal Access Token and saves it to the macOS Keychain"
+  echo "for use with the uatec/homebrew-tools tap."
+  exit 0
+fi
+
+echo "This script will save your GitHub Personal Access Token to the macOS Keychain."
+echo "Service Name: $SERVICE_NAME"
+echo ""
+echo "Opening GitHub to create a new token..."
+echo "Ensure the 'repo' scope is selected."
+echo "IMPORTANT: Set the 'Expiration' to '1 year' (or your preferred duration)."
+echo ""
+
+# Open GitHub token page with pre-filled description and repo scope
+open "https://github.com/settings/tokens/new?description=Homebrew%20Tools%20Tap%20(uatec-homebrew-tools-github-token)&scopes=repo"
+
+echo -n "Enter your GitHub Personal Access Token: "
+read -s TOKEN
+echo ""
+
+if [ -z "$TOKEN" ]; then
+  echo "Error: Token cannot be empty."
+  exit 1
+fi
+
+# -a: Account name (using current user)
+# -s: Service name
+# -w: Password (the token)
+# -U: Update if exists
+security add-generic-password -a "$USER" -s "$SERVICE_NAME" -w "$TOKEN" -U
+
+if [ $? -eq 0 ]; then
+  echo "✅ Token saved successfully to Keychain!"
+else
+  echo "❌ Failed to save token to Keychain."
+  exit 1
+fi
