@@ -27,6 +27,17 @@ brew install --cask uatec/tools/<cask>
 To install casks or formulae that download from private GitHub repositories, you must first set up your GitHub Personal Access Token.
 
 1.  Create a [GitHub Personal Access Token](https://github.com/settings/tokens) (classic) with `repo` scope.
+    
+    **Quick start:** Generate a URL to the token creation page with required permissions:
+    
+    ```bash
+    # From this repository
+    bin/generate-token-url
+    
+    # Or copy to clipboard (macOS)
+    bin/generate-token-url --copy
+    ```
+
 2.  Install and run the helper tool to save it to your Keychain:
 
     ```bash

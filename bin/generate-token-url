@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Script to generate a GitHub Personal Access Token creation URL
+# with prepopulated description and required permissions
+
+SERVICE_NAME="uatec-homebrew-tools-github-token"
+DESCRIPTION="Homebrew%20Tools%20Tap%20(uatec-homebrew-tools-github-token)"
+SCOPES="repo"
+
+# Build the URL
+TOKEN_URL="https://github.com/settings/tokens/new?description=${DESCRIPTION}&scopes=${SCOPES}"
+
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo "Usage: generate-token-url [--copy]"
+  echo ""
+  echo "Generates a GitHub Personal Access Token creation URL with prepopulated"
+  echo "description and required permissions for the uatec/homebrew-tools tap."
+  echo ""
+  echo "Options:"
+  echo "  --copy    Copy the URL to clipboard (macOS only)"
+  echo "  --help    Show this help message"
+  echo ""
+  echo "Required permissions:"
+  echo "  - repo: Full control of private repositories"
+  exit 0
+fi
+
+if [[ "$1" == "--copy" ]]; then
+  echo "$TOKEN_URL" | pbcopy
+  echo "✅ URL copied to clipboard!"
+  echo ""
+  echo "The URL has been copied to your clipboard."
+  echo "Paste it into your browser to create a new GitHub Personal Access Token."
+else
+  echo "$TOKEN_URL"
+fi
