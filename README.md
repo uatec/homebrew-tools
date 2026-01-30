@@ -66,6 +66,33 @@ To install casks or formulae that download from private GitHub repositories, you
 3. Test locally with `brew install --build-from-source ./Formula/<name>.rb`
 4. Submit a pull request
 
+## Automated Updates
+
+This repository includes a GitHub Actions workflow for automatically updating formula and cask URLs and SHA256 hashes.
+
+### Using the Update Workflow
+
+To update a formula or cask:
+
+1. Go to the [Actions tab](../../actions/workflows/update-formula-cask.yml) in this repository
+2. Click "Run workflow"
+3. Provide the required inputs:
+   - **name**: The name of the formula or cask (without `.rb` extension), e.g., `sysupdate` or `pingmeter`
+   - **url**: The new download URL
+   - **sha256**: The new SHA256 hash of the download file
+4. Click "Run workflow"
+
+The workflow will automatically:
+- Detect whether the file is a formula or cask
+- Update the URL and SHA256 fields
+- Preserve the file's formatting and indentation
+- Commit and push the changes to the main branch
+
+**Example:**
+- Name: `sysupdate`
+- URL: `https://github.com/uatec/sysupdate/releases/download/v0.0.2/sysupdate-osx-arm64.zip`
+- SHA256: `abc123def456...` (64-character hexadecimal string)
+
 ## Documentation
 
 - [Homebrew Formula Cookbook](https://docs.brew.sh/Formula-Cookbook)
