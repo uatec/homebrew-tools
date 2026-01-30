@@ -5,8 +5,8 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
     super
   end
 
-  def _fetch(url:, resolved_url:, timeout:)
-    curl_download url, "--header", "Authorization: token #{github_token}", to: temporary_path
+  def _curl_args
+    super + ["--header", "Authorization: token #{github_token}"]
   end
 
   private
