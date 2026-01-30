@@ -90,18 +90,24 @@ jobs:
           # Create a backup
           cp "$FILE_PATH" "$FILE_PATH.bak"
           
-          # Escape special characters in the URL for sed
-          # We'll use a delimiter that's unlikely to appear in URLs (|)
-          # But we need to escape it if present, along with backslashes and ampersands
-          ESCAPED_URL=$(printf '%s\n' "$URL" | sed 's/[|\&]/\\&/g')
-          
           # Update version - preserve original indentation
           sed -i "s/^\( *version \)\"[^\"]*\"/\1\"${VERSION_NUMBER}\"/" "$FILE_PATH"
           
-          # Update URL - this handles both single line and multi-line url declarations
-          # The regex captures the indentation and everything after the closing quote
-          # It preserves any trailing content on the same line (like commas)
-          sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
+          # Check if URL contains version interpolation (e.g., #{version})
+          if grep -q '#{version}' "$FILE_PATH"; then
+            echo "Detected version interpolation in URL - skipping URL update"
+            echo "The version field update will automatically update the interpolated URL"
+          else
+            # Escape special characters in the URL for sed
+            # We'll use a delimiter that's unlikely to appear in URLs (|)
+            # But we need to escape it if present, along with backslashes and ampersands
+            ESCAPED_URL=$(printf '%s\n' "$URL" | sed 's/[|\&]/\\&/g')
+            
+            # Update URL - this handles both single line and multi-line url declarations
+            # The regex captures the indentation and everything after the closing quote
+            # It preserves any trailing content on the same line (like commas)
+            sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
+          fi
           
           # Update SHA256 - preserve original indentation
           sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${SHA256}\"/" "$FILE_PATH"
