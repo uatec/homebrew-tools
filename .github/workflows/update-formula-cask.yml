@@ -93,7 +93,14 @@ jobs:
           # Update version - preserve original indentation
           sed -i "s/^\( *version \)\"[^\"]*\"/\1\"${VERSION_NUMBER}\"/" "$FILE_PATH"
           
+          # Verify version was updated
+          if ! grep -q "version \"${VERSION_NUMBER}\"" "$FILE_PATH"; then
+            echo "Warning: Version field not found or not updated in the file."
+            echo "Make sure the file contains a 'version' field."
+          fi
+          
           # Check if URL contains version interpolation (e.g., #{version})
+          URL_UPDATED=false
           if grep -q '#{version}' "$FILE_PATH"; then
             echo "Detected version interpolation in URL - skipping URL update"
             echo "The version field update will automatically update the interpolated URL"
@@ -107,10 +114,14 @@ jobs:
             # The regex captures the indentation and everything after the closing quote
             # It preserves any trailing content on the same line (like commas)
             sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
+            URL_UPDATED=true
           fi
           
           # Update SHA256 - preserve original indentation
           sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${SHA256}\"/" "$FILE_PATH"
+          
+          # Export whether URL was updated for use in commit message
+          echo "URL_UPDATED=${URL_UPDATED}" >> $GITHUB_ENV
           
           # Verify changes were made
           if diff -q "$FILE_PATH.bak" "$FILE_PATH" > /dev/null; then
@@ -141,5 +152,12 @@ jobs:
             exit 0
           fi
           
-          git commit -m "Update ${{ inputs.name }} to ${{ inputs.version }}: version, url and sha256"
+          # Create appropriate commit message based on what was updated
+          if [ "$URL_UPDATED" = "true" ]; then
+            COMMIT_MSG="Update ${{ inputs.name }} to ${{ inputs.version }}: version, url and sha256"
+          else
+            COMMIT_MSG="Update ${{ inputs.name }} to ${{ inputs.version }}: version and sha256"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
           git push
