@@ -1,0 +1,67 @@
+name: Update Formula or Cask
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Name of the formula or cask (without .rb extension)'
+        required: true
+        type: string
+      url:
+        description: 'New URL for the formula or cask'
+        required: true
+        type: string
+      sha256:
+        description: 'New SHA256 hash for the download'
+        required: true
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect file type and update
+        run: |
+          # Check if it's a formula
+          if [ -f "Formula/${{ inputs.name }}.rb" ]; then
+            FILE_PATH="Formula/${{ inputs.name }}.rb"
+            echo "Found formula: $FILE_PATH"
+          # Check if it's a cask
+          elif [ -f "Casks/${{ inputs.name }}.rb" ]; then
+            FILE_PATH="Casks/${{ inputs.name }}.rb"
+            echo "Found cask: $FILE_PATH"
+          else
+            echo "Error: Could not find Formula/${{ inputs.name }}.rb or Casks/${{ inputs.name }}.rb"
+            exit 1
+          fi
+          
+          # Create a backup
+          cp "$FILE_PATH" "$FILE_PATH.bak"
+          
+          # Update URL - this handles both single line and multi-line url declarations
+          # The regex captures everything after 'url "' and replaces it with the new URL
+          # It preserves any trailing content on the same line (like commas)
+          sed -i 's|^\( *url \)"[^"]*"\(.*\)|  url "${{ inputs.url }}"\2|' "$FILE_PATH"
+          
+          # Update SHA256
+          sed -i 's/^\( *sha256 \)"[^"]*"/  sha256 "${{ inputs.sha256 }}"/' "$FILE_PATH"
+          
+          # Show the changes
+          echo "Changes made:"
+          diff "$FILE_PATH.bak" "$FILE_PATH" || true
+          
+          # Clean up backup
+          rm "$FILE_PATH.bak"
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update ${{ inputs.name }}: url and sha256"
+          git push
