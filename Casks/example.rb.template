@@ -1,0 +1,37 @@
+# Example cask template
+# Rename this file to <name>.rb and customize
+
+cask "example" do
+  version "1.0.0"
+  sha256 "abc123..." # Replace with actual SHA256 checksum
+
+  url "https://example.com/releases/download/v#{version}/Example-#{version}.dmg"
+  name "Example App"
+  desc "Short description of the application"
+  homepage "https://example.com"
+
+  # Optional: auto-update support
+  # livecheck do
+  #   url "https://example.com/releases/latest"
+  #   strategy :github_latest
+  # end
+
+  # For .app bundles:
+  app "Example.app"
+
+  # For .pkg installers:
+  # pkg "Example.pkg"
+
+  # For binaries:
+  # binary "#{appdir}/Example.app/Contents/MacOS/example"
+
+  # Uninstall instructions (required for pkg installers):
+  # uninstall pkgutil: "com.example.pkg"
+
+  # Zap removes all traces (optional):
+  # zap trash: [
+  #   "~/Library/Application Support/Example",
+  #   "~/Library/Preferences/com.example.plist",
+  #   "~/Library/Caches/com.example",
+  # ]
+end

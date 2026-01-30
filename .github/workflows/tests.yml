@@ -1,0 +1,48 @@
+name: Homebrew Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-formulae:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap this repository
+        run: |
+          mkdir -p $(brew --repository)/Library/Taps/uatec
+          ln -s $GITHUB_WORKSPACE $(brew --repository)/Library/Taps/uatec/homebrew-tools
+
+      - name: Run brew style
+        run: brew style --formula ./Formula/*.rb
+
+      - name: Run brew audit
+        run: brew audit --strict --formula ./Formula/*.rb
+
+  test-casks:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap this repository
+        run: |
+          mkdir -p $(brew --repository)/Library/Taps/uatec
+          ln -s $GITHUB_WORKSPACE $(brew --repository)/Library/Taps/uatec/homebrew-tools
+
+      - name: Run brew style on casks
+        run: brew style --cask ./Casks/*.rb
+
+      - name: Run brew audit on casks
+        run: brew audit --strict --cask ./Casks/*.rb

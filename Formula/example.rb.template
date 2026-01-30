@@ -1,0 +1,36 @@
+# Example formula template
+# Rename this file to <name>.rb and customize
+
+class Example < Formula
+  desc "Short description of the software"
+  homepage "https://example.com"
+  url "https://example.com/archive/v1.0.0.tar.gz"
+  sha256 "abc123..." # Replace with actual SHA256 checksum
+  license "MIT"
+
+  # Optional: specify dependencies
+  # depends_on "cmake" => :build
+  # depends_on "openssl"
+
+  def install
+    # Install steps - common patterns:
+    
+    # For compiled binaries:
+    # system "./configure", "--prefix=#{prefix}"
+    # system "make", "install"
+    
+    # For Go projects:
+    # system "go", "build", "-o", bin/"example"
+    
+    # For prebuilt binaries:
+    # bin.install "example"
+    
+    # For scripts:
+    # bin.install "example.sh" => "example"
+  end
+
+  test do
+    # Verify the installation
+    system "#{bin}/example", "--version"
+  end
+end
