@@ -27,7 +27,13 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
       http.request(req)
     end
 
-    res["location"]
+    if res["location"]
+      res["location"]
+    else
+      raise CurlDownloadStrategyError, "Failed to get download URL: #{res.code} #{res.message}"
+    end
+  rescue StandardError => e
+    raise CurlDownloadStrategyError, "Failed to get download URL: #{e.message}"
   end
 
   private
@@ -62,11 +68,13 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
       http.request(req)
     end
 
-    if res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body)
-    else
-      raise CurlDownloadStrategyError, "Failed to fetch release metadata: #{res.code} #{res.message}"
+    unless res.is_a?(Net::HTTPSuccess)
+      raise CurlDownloadStrategyError, "GitHub API request failed: #{res.code} #{res.message}"
     end
+
+    JSON.parse(res.body)
+  rescue JSON::ParserError => e
+    raise CurlDownloadStrategyError, "Failed to parse GitHub API response: #{e.message}"
   rescue StandardError => e
     raise CurlDownloadStrategyError, "Failed to fetch release metadata: #{e.message}"
   end
