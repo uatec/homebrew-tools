@@ -1,8 +1,8 @@
 require_relative "../lib/private_strategy"
 
 cask "pingmeter" do
-  version "0.0.3"
-  sha256 "03082dcd5acf518c5d19ff7d4e59ea46fafdde9ba5316cfc802b8fcbe705a873"
+  version "0.0.5"
+  sha256 "8699bc45a7ea7508762799bbd91b8a38e1d224f4763023fc293600c5752e17f7"
 
   url "https://github.com/uatec/pingmeter/releases/download/v#{version}/PingMeter.zip",
       using: PrivateGitHubDownloadStrategy
