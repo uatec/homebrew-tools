@@ -35,32 +35,48 @@ jobs:
           fi
           
           # Validate URL format (basic check)
-          if ! echo "${{ inputs.url }}" | grep -qE '^https?://'; then
-            echo "Error: URL must start with http:// or https://"
+          if ! echo "${{ inputs.url }}" | grep -qE '^https?://[a-zA-Z0-9.-]+'; then
+            echo "Error: URL must be a valid http or https URL with a domain"
             echo "Provided: ${{ inputs.url }}"
+            exit 1
+          fi
+          
+          # Validate name (only allow alphanumeric, hyphens, and underscores to prevent injection)
+          if ! echo "${{ inputs.name }}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+            echo "Error: Name can only contain letters, numbers, hyphens, and underscores"
+            echo "Provided: ${{ inputs.name }}"
             exit 1
           fi
 
       - name: Detect file type and update
         run: |
+          NAME="${{ inputs.name }}"
+          URL="${{ inputs.url }}"
+          SHA256="${{ inputs.sha256 }}"
+          
           # Check if it's a formula
-          if [ -f "Formula/${{ inputs.name }}.rb" ]; then
-            FILE_PATH="Formula/${{ inputs.name }}.rb"
+          if [ -f "Formula/${NAME}.rb" ]; then
+            FILE_PATH="Formula/${NAME}.rb"
             echo "Found formula: $FILE_PATH"
           # Check if it's a cask
-          elif [ -f "Casks/${{ inputs.name }}.rb" ]; then
-            FILE_PATH="Casks/${{ inputs.name }}.rb"
+          elif [ -f "Casks/${NAME}.rb" ]; then
+            FILE_PATH="Casks/${NAME}.rb"
             echo "Found cask: $FILE_PATH"
           else
-            echo "Error: Could not find Formula/${{ inputs.name }}.rb or Casks/${{ inputs.name }}.rb"
+            echo "Error: Could not find Formula/${NAME}.rb or Casks/${NAME}.rb"
             exit 1
           fi
+          
+          # Export FILE_PATH for use in subsequent steps
+          echo "FILE_PATH=${FILE_PATH}" >> $GITHUB_ENV
           
           # Create a backup
           cp "$FILE_PATH" "$FILE_PATH.bak"
           
-          # Escape special characters in the URL for sed (escape &, \, and /)
-          ESCAPED_URL=$(echo "${{ inputs.url }}" | sed 's/[&/\]/\\&/g')
+          # Escape special characters in the URL for sed
+          # We'll use a delimiter that's unlikely to appear in URLs (|)
+          # But we need to escape it if present, along with backslashes and ampersands
+          ESCAPED_URL=$(printf '%s\n' "$URL" | sed 's/[|\&]/\\&/g')
           
           # Update URL - this handles both single line and multi-line url declarations
           # The regex captures the indentation and everything after the closing quote
@@ -68,7 +84,7 @@ jobs:
           sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
           
           # Update SHA256 - preserve original indentation
-          sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${{ inputs.sha256 }}\"/" "$FILE_PATH"
+          sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${SHA256}\"/" "$FILE_PATH"
           
           # Verify changes were made
           if diff -q "$FILE_PATH.bak" "$FILE_PATH" > /dev/null; then
@@ -89,7 +105,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
+          
+          # Only add the specific file that was modified
+          git add "$FILE_PATH"
           
           # Check if there are changes to commit
           if git diff --staged --quiet; then
