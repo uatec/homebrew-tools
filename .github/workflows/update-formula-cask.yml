@@ -1,0 +1,163 @@
+name: Update Formula or Cask
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Name of the formula or cask (without .rb extension)'
+        required: true
+        type: string
+      version:
+        description: 'New version (format: v0.0.0)'
+        required: true
+        type: string
+      url:
+        description: 'New URL for the formula or cask'
+        required: true
+        type: string
+      sha256:
+        description: 'New SHA256 hash for the download'
+        required: true
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to commit and push changes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate inputs
+        run: |
+          # Validate version format (must be v followed by semantic version)
+          if ! echo "${{ inputs.version }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Error: Version must be in the format v0.0.0 (e.g., v1.2.3)"
+            echo "Provided: ${{ inputs.version }}"
+            exit 1
+          fi
+          
+          # Validate SHA256 format (must be 64 hex characters)
+          if ! echo "${{ inputs.sha256 }}" | grep -qE '^[a-fA-F0-9]{64}$'; then
+            echo "Error: SHA256 must be a 64-character hexadecimal string"
+            echo "Provided: ${{ inputs.sha256 }}"
+            exit 1
+          fi
+          
+          # Validate URL format (basic check)
+          if ! echo "${{ inputs.url }}" | grep -qE '^https?://[a-zA-Z0-9.-]+'; then
+            echo "Error: URL must be a valid http or https URL with a domain"
+            echo "Provided: ${{ inputs.url }}"
+            exit 1
+          fi
+          
+          # Validate name (only allow alphanumeric, hyphens, and underscores to prevent injection)
+          if ! echo "${{ inputs.name }}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+            echo "Error: Name can only contain letters, numbers, hyphens, and underscores"
+            echo "Provided: ${{ inputs.name }}"
+            exit 1
+          fi
+
+      - name: Detect file type and update
+        run: |
+          NAME="${{ inputs.name }}"
+          VERSION="${{ inputs.version }}"
+          URL="${{ inputs.url }}"
+          SHA256="${{ inputs.sha256 }}"
+          
+          # Strip the "v" prefix from version for the file content
+          VERSION_NUMBER="${VERSION#v}"
+          
+          # Check if it's a formula
+          if [ -f "Formula/${NAME}.rb" ]; then
+            FILE_PATH="Formula/${NAME}.rb"
+            echo "Found formula: $FILE_PATH"
+          # Check if it's a cask
+          elif [ -f "Casks/${NAME}.rb" ]; then
+            FILE_PATH="Casks/${NAME}.rb"
+            echo "Found cask: $FILE_PATH"
+          else
+            echo "Error: Could not find Formula/${NAME}.rb or Casks/${NAME}.rb"
+            exit 1
+          fi
+          
+          # Export FILE_PATH for use in subsequent steps
+          echo "FILE_PATH=${FILE_PATH}" >> $GITHUB_ENV
+          
+          # Create a backup
+          cp "$FILE_PATH" "$FILE_PATH.bak"
+          
+          # Update version - preserve original indentation
+          sed -i "s/^\( *version \)\"[^\"]*\"/\1\"${VERSION_NUMBER}\"/" "$FILE_PATH"
+          
+          # Verify version was updated
+          if ! grep -q "version \"${VERSION_NUMBER}\"" "$FILE_PATH"; then
+            echo "Warning: Version field not found or not updated in the file."
+            echo "Make sure the file contains a 'version' field."
+          fi
+          
+          # Check if URL contains version interpolation (e.g., #{version})
+          URL_UPDATED=false
+          if grep -q '#{version}' "$FILE_PATH"; then
+            echo "Detected version interpolation in URL - skipping URL update"
+            echo "The version field update will automatically update the interpolated URL"
+          else
+            # Escape special characters in the URL for sed
+            # We'll use a delimiter that's unlikely to appear in URLs (|)
+            # But we need to escape it if present, along with backslashes and ampersands
+            ESCAPED_URL=$(printf '%s\n' "$URL" | sed 's/[|\&]/\\&/g')
+            
+            # Update URL - this handles both single line and multi-line url declarations
+            # The regex captures the indentation and everything after the closing quote
+            # It preserves any trailing content on the same line (like commas)
+            sed -i "s|^\( *url \)\"[^\"]*\"\(.*\)|\1\"${ESCAPED_URL}\"\2|" "$FILE_PATH"
+            URL_UPDATED=true
+          fi
+          
+          # Update SHA256 - preserve original indentation
+          sed -i "s/^\( *sha256 \)\"[^\"]*\"/\1\"${SHA256}\"/" "$FILE_PATH"
+          
+          # Export whether URL was updated for use in commit message
+          echo "URL_UPDATED=${URL_UPDATED}" >> $GITHUB_ENV
+          
+          # Verify changes were made
+          if diff -q "$FILE_PATH.bak" "$FILE_PATH" > /dev/null; then
+            echo "Warning: No changes were made to the file."
+            echo "This might indicate that the sed patterns didn't match the file format."
+            cat "$FILE_PATH"
+            exit 1
+          fi
+          
+          # Show the changes
+          echo "Changes made:"
+          diff "$FILE_PATH.bak" "$FILE_PATH" || true
+          
+          # Clean up backup
+          rm "$FILE_PATH.bak"
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Only add the specific file that was modified
+          git add "$FILE_PATH"
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          # Create appropriate commit message based on what was updated
+          if [ "$URL_UPDATED" = "true" ]; then
+            COMMIT_MSG="Update ${{ inputs.name }} to ${{ inputs.version }}: version, url and sha256"
+          else
+            COMMIT_MSG="Update ${{ inputs.name }} to ${{ inputs.version }}: version and sha256"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git push
