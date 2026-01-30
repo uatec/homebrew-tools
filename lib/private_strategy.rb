@@ -1,6 +1,6 @@
 require "download_strategy"
-require "utils/github"
 require "net/http"
+require "json"
 
 class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
   def initialize(url, name, version, **meta)
@@ -52,7 +52,21 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
 
   def fetch_release_metadata
     release_url = "https://api.github.com/repos/#{@owner}/#{@repo}/releases/tags/#{@tag}"
-    GitHub.open_api(release_url)
+    uri = URI(release_url)
+    req = Net::HTTP::Get.new(uri)
+    req["Accept"] = "application/vnd.github+json"
+    req["Authorization"] = "token #{github_token}"
+    req["X-GitHub-Api-Version"] = "2022-11-28"
+
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+      http.request(req)
+    end
+
+    if res.is_a?(Net::HTTPSuccess)
+      JSON.parse(res.body)
+    else
+      raise CurlDownloadStrategyError, "Failed to fetch release metadata: #{res.code} #{res.message}"
+    end
   end
 
   def github_token
