@@ -7,6 +7,10 @@ on:
         description: 'Name of the formula or cask (without .rb extension)'
         required: true
         type: string
+      version:
+        description: 'New version (format: v0.0.0)'
+        required: true
+        type: string
       url:
         description: 'New URL for the formula or cask'
         required: true
@@ -29,6 +33,13 @@ jobs:
 
       - name: Validate inputs
         run: |
+          # Validate version format (must be v followed by semantic version)
+          if ! echo "${{ inputs.version }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Error: Version must be in the format v0.0.0 (e.g., v1.2.3)"
+            echo "Provided: ${{ inputs.version }}"
+            exit 1
+          fi
+          
           # Validate SHA256 format (must be 64 hex characters)
           if ! echo "${{ inputs.sha256 }}" | grep -qE '^[a-fA-F0-9]{64}$'; then
             echo "Error: SHA256 must be a 64-character hexadecimal string"
@@ -53,8 +64,12 @@ jobs:
       - name: Detect file type and update
         run: |
           NAME="${{ inputs.name }}"
+          VERSION="${{ inputs.version }}"
           URL="${{ inputs.url }}"
           SHA256="${{ inputs.sha256 }}"
+          
+          # Strip the "v" prefix from version for the file content
+          VERSION_NUMBER="${VERSION#v}"
           
           # Check if it's a formula
           if [ -f "Formula/${NAME}.rb" ]; then
@@ -79,6 +94,9 @@ jobs:
           # We'll use a delimiter that's unlikely to appear in URLs (|)
           # But we need to escape it if present, along with backslashes and ampersands
           ESCAPED_URL=$(printf '%s\n' "$URL" | sed 's/[|\&]/\\&/g')
+          
+          # Update version - preserve original indentation
+          sed -i "s/^\( *version \)\"[^\"]*\"/\1\"${VERSION_NUMBER}\"/" "$FILE_PATH"
           
           # Update URL - this handles both single line and multi-line url declarations
           # The regex captures the indentation and everything after the closing quote
@@ -117,5 +135,5 @@ jobs:
             exit 0
           fi
           
-          git commit -m "Update ${{ inputs.name }}: url and sha256"
+          git commit -m "Update ${{ inputs.name }} to ${{ inputs.version }}: version, url and sha256"
           git push
