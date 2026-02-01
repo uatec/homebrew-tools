@@ -11,10 +11,28 @@ cask "sysupdateui" do
   homepage "https://github.com/uatec/sysupdateui"
   app "SysUpdateUI.app"
 
+  preflight do
+    if system "/usr/bin/pgrep", "-q", "-x", "SysUpdateUI"
+      File.write("/tmp/sysupdateui_restart_required", "")
+      system "/usr/bin/pkill", "-x", "SysUpdateUI"
+      10.times do
+        break unless system "/usr/bin/pgrep", "-q", "-x", "SysUpdateUI"
+        sleep 0.5
+      end
+    else
+      FileUtils.rm_f "/tmp/sysupdateui_restart_required"
+    end
+  end
+
   postflight do
     system_command "/usr/bin/xattr",
                    args: ["-r", "-d", "com.apple.quarantine", "#{appdir}/SysUpdateUI.app"],
                    sudo: true
+
+    if File.exist?("/tmp/sysupdateui_restart_required")
+      system "/usr/bin/open", "#{appdir}/SysUpdateUI.app"
+      FileUtils.rm_f "/tmp/sysupdateui_restart_required"
+    end
   end
 
   zap trash: [
