@@ -1,4 +1,4 @@
-require_relative "../lib/private_strategy"
+require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 
 cask "sysupdateui" do
   version "0.0.8"
