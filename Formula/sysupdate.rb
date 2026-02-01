@@ -1,4 +1,4 @@
-require_relative "../lib/private_strategy"
+require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 
 class Sysupdate < Formula
   desc "Tool for managing many different software update mechanisms with a unified interface"
