@@ -1,10 +1,10 @@
 require_relative "../lib/private_strategy"
 
 cask "sysupdateui" do
-  version "0.0.7"
-  sha256 "6f316ac92c8c1a2083a15c2c7b6c6be985644964cc54f86c052ed1dc0033c0ae"
+  version "0.0.8"
+  sha256 "1b259340d5a47637a3fd659006671920ce058188971265334593d5b3b6b89cd8"
 
-  url "https://github.com/uatec/sysupdateui/releases/download/v0.0.7/SysUpdateUI.zip",
+  url "https://github.com/uatec/sysupdateui/releases/download/v0.0.8/SysUpdateUI.zip",
       using: PrivateGitHubDownloadStrategy
   name "SysUpdateUI"
 
