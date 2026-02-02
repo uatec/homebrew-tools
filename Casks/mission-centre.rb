@@ -1,10 +1,10 @@
 require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 
 cask "mission-centre" do
-  version "0.0.0"
-  sha256 "PLACEHOLDER_SHA256"
+  version "0.0.3"
+  sha256 "7a70ae662dbb997e82798759d3f415b48de83fb5e09371af5db6f2dbc22af4ba"
 
-  url "PLACEHOLDER_URL",
+  url "https://github.com/uatec/release-tracker/releases/download/v0.0.3/MissionCentre.zip",
       using: PrivateGitHubDownloadStrategy
   name "MissionCentre"
 
