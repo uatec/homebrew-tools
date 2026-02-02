@@ -1,10 +1,10 @@
 require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 
 cask "sysupdateui" do
-  version "0.0.10"
-  sha256 "3206c38404d9b535676c5c6583f5f2a52f353a268ac616334f0b57f826ea36cb"
+  version "0.0.11"
+  sha256 "168637d0540776ca3cba51bc81adc41b0fc8ec308759b8396b4bf6e76315e3db"
 
-  url "https://github.com/uatec/sysupdateui/releases/download/v0.0.10/SysUpdateUI.zip",
+  url "https://github.com/uatec/sysupdateui/releases/download/v0.0.11/SysUpdateUI.zip",
       using: PrivateGitHubDownloadStrategy
   name "SysUpdateUI"
 
