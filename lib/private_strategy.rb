@@ -79,14 +79,25 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
     raise CurlDownloadStrategyError, "Failed to fetch release metadata: #{e.message}"
   end
 
-  def github_token
+    def github_token
     @github_token ||= begin
-      # Retrieve the token from the macOS Keychain
-      token = `security find-generic-password -s "uatec-homebrew-tools-github-token" -w 2>/dev/null`.strip
-      if token.empty?
-        raise CurlDownloadStrategyError, "No GitHub API token found in Keychain. Run `secure-tap-access` to set it up."
+      # 1. Environment variable
+      return ENV["UATEC_HOMEBREW_TOOLS_GITHUB_TOKEN"] if ENV["UATEC_HOMEBREW_TOOLS_GITHUB_TOKEN"]
+
+      # 2. Local file (Linux/Fallback)
+      token_file = File.expand_path("~/.config/uatec-homebrew-tools/token")
+      if File.exist?(token_file)
+        token = File.read(token_file).strip
+        return token unless token.empty?
       end
-      token
+
+      # 3. macOS Keychain (macOS only)
+      if OS.mac?
+        token = `security find-generic-password -s "uatec-homebrew-tools-github-token" -w 2>/dev/null`.strip
+        return token unless token.empty?
+      end
+
+      raise CurlDownloadStrategyError, "No GitHub API token found. Please set UATEC_HOMEBREW_TOOLS_GITHUB_TOKEN, or run `secure-tap-access`."
     end
   end
 end

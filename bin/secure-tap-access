@@ -10,16 +10,27 @@ if [[ "$1" == "--help" ]]; then
   exit 0
 fi
 
-echo "This script will save your GitHub Personal Access Token to the macOS Keychain."
+# Helper function to check OS
+is_macos() {
+  [[ "$OSTYPE" == "darwin"* ]]
+}
+
+# 1. Get Hostname
+HOSTNAME=$(hostname)
+
+# 2. Construct URL with hostname in description
+URL="https://github.com/settings/tokens/new?description=Homebrew%20Tools%20Tap%20(${HOSTNAME})&scopes=repo"
+
+echo "This script will save your GitHub Personal Access Token for the uatec/homebrew-tools tap."
 echo "Service Name: $SERVICE_NAME"
 echo ""
-echo "Opening GitHub to create a new token..."
+echo "Please open the following URL in your browser to create a new token:"
+echo "---------------------------------------------------------------------"
+echo "$URL"
+echo "---------------------------------------------------------------------"
 echo "Ensure the 'repo' scope is selected."
 echo "IMPORTANT: Set the 'Expiration' to '1 year' (or your preferred duration)."
 echo ""
-
-# Open GitHub token page with pre-filled description and repo scope
-open "https://github.com/settings/tokens/new?description=Homebrew%20Tools%20Tap%20(uatec-homebrew-tools-github-token)&scopes=repo"
 
 echo -n "Enter your GitHub Personal Access Token: "
 read -s TOKEN
@@ -30,15 +41,28 @@ if [ -z "$TOKEN" ]; then
   exit 1
 fi
 
-# -a: Account name (using current user)
-# -s: Service name
-# -w: Password (the token)
-# -U: Update if exists
-security add-generic-password -a "$USER" -s "$SERVICE_NAME" -w "$TOKEN" -U
-
-if [ $? -eq 0 ]; then
-  echo "✅ Token saved successfully to Keychain!"
+if is_macos; then
+  # macOS: Save to Keychain
+  security add-generic-password -a "$USER" -s "$SERVICE_NAME" -w "$TOKEN" -U
+  if [ $? -eq 0 ]; then
+    echo "✅ Token saved successfully to macOS Keychain!"
+  else
+    echo "❌ Failed to save token to Keychain."
+    exit 1
+  fi
 else
-  echo "❌ Failed to save token to Keychain."
-  exit 1
+  # Linux (or other): Save to file
+  CONFIG_DIR="$HOME/.config/uatec-homebrew-tools"
+  TOKEN_FILE="$CONFIG_DIR/token"
+
+  mkdir -p "$CONFIG_DIR"
+  echo "$TOKEN" > "$TOKEN_FILE"
+  chmod 600 "$TOKEN_FILE"
+
+  if [ $? -eq 0 ]; then
+    echo "✅ Token saved to $TOKEN_FILE"
+  else
+    echo "❌ Failed to save token to file."
+    exit 1
+  fi
 fi
