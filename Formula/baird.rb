@@ -23,6 +23,7 @@ class Baird < Formula
   depends_on :linux
 
   def install
-    bin.install "Baird" => "baird"
+    libexec.install Dir["*"]
+    bin.install_symlink libexec/"Baird" => "baird"
   end
 end
