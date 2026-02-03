@@ -2,8 +2,8 @@ class SecureTapAccess < Formula
   desc "Helper to setup authenticated access for uatec/tools tap"
   homepage "https://github.com/uatec/homebrew-tools"
   url "https://raw.githubusercontent.com/uatec/homebrew-tools/main/bin/secure-tap-access"
-  version "0.1.0"
-  sha256 "e1fb437c7d82d35c0ff26f2711f9f22ce098281ec872c51da29ca03de826ca04"
+  version "0.1.1"
+  sha256 "0d91151fb3706848e9bce24550c0d6b600dcd6089a1fa6488b98ede8ff905b57"
 
   def install
     bin.install "secure-tap-access"
