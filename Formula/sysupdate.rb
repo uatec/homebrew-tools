@@ -3,10 +3,10 @@ require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 class Sysupdate < Formula
   desc "Tool for managing many different software update mechanisms with a unified interface"
   homepage "https://github.com/uatec/sysupdate"
-  url "https://github.com/uatec/sysupdate/releases/download/v0.0.9/sysupdate-osx-arm64.zip",
+  url "https://github.com/uatec/sysupdate/releases/download/v0.0.10/sysupdate-osx-arm64.zip",
       using: PrivateGitHubDownloadStrategy
-  version "0.0.9"
-  sha256 "9586493c27f6119940b119a142250fd7625bc904ba80403f6a90618d7d130311"
+  version "0.0.10"
+  sha256 "55e5e4448a3c178002288b2dcc5cba552d1928995850d269e17624779369ae4e"
 
   def install
     bin.install "sysupdate"
