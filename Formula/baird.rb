@@ -29,10 +29,10 @@ def install
     # 1. Compress the binary so Homebrew's scanner ignores it.
     #    This bypasses the crash entirely.
     system "gzip", "Baird"
+    system "rm", "Baird"
     
     # 2. Install the compressed file and the libraries
-    libexec.install "Baird.gz"
-    libexec.install Dir["*.so"]
+    libexec.install Dir["*"]
 
     # 3. Create a wrapper script to run it.
     #    On first run, it unzips the binary to a cache folder.
