@@ -22,6 +22,9 @@ class Baird < Formula
   # If this is for Linux specifically
   depends_on :linux
 
+  # AOT compilation produces files that are not relocatable, so we skip cleaning them.
+  skip_clean :all
+
   def install
     libexec.install Dir["*"]
     bin.install_symlink libexec/"Baird" => "baird"
