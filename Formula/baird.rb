@@ -29,7 +29,6 @@ def install
     # 1. Compress the binary so Homebrew's scanner ignores it.
     #    This bypasses the crash entirely.
     system "gzip", "Baird"
-    system "rm", "Baird"
     
     # 2. Install the compressed file and the libraries
     libexec.install Dir["*"]
