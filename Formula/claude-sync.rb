@@ -14,6 +14,9 @@ class ClaudeSync < Formula
   depends_on "rsync"
 
   def install
+    # Stamp the formula version into the script so `claude-sync --version`
+    # reflects what brew actually installed.
+    inreplace "bin/claude-sync", /^VERSION="[^"]*"/, "VERSION=\"#{version}\""
     libexec.install "lib"
     libexec.install "bin" => "libexec-bin"
     (bin/"claude-sync").write <<~EOS
