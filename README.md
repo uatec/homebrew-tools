@@ -63,6 +63,7 @@ To install casks or formulae that download from private GitHub repositories, you
 <!-- Add your formulae here -->
 - `secure-tap-access`: Helper to setup authenticated access for uatec/tools tap
 - `sysupdate`: Tool for managing many different software update mechanisms
+- `claude-sync`: Sync Claude Code and Claude Desktop config across machines ([uatec/claude-sync](https://github.com/uatec/claude-sync))
 
 
 ## Available Casks
