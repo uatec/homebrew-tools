@@ -3,10 +3,10 @@ require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 class ClaudeSync < Formula
   desc "Sync Claude Code and Claude Desktop config across machines"
   homepage "https://github.com/uatec/claude-sync"
-  url "https://github.com/uatec/claude-sync/archive/refs/tags/v0.1.0.tar.gz",
+  url "https://github.com/uatec/claude-sync/archive/refs/tags/v0.1.1.tar.gz",
       using: PrivateGitHubDownloadStrategy
-  version "0.1.0"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  version "0.1.1"
+  sha256 "eb139fa98100524eb7baabb267182fb63fe98f6b7aa1c483b676518eecf252de"
   license "MIT"
 
   depends_on "git"
