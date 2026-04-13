@@ -9,18 +9,42 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
   end
 
   def parse_url_pattern
-    url_pattern = %r{https://github.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(\S+)}
-    unless @url =~ url_pattern
-      raise CurlDownloadStrategyError, "Invalid url pattern for GitHub Release."
-    end
+    release_pattern = %r{https://github.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(\S+)}
+    tarball_pattern = %r{https://github.com/([^/]+)/([^/]+)/archive/refs/tags/([^/]+)\.tar\.gz}
+    zipball_pattern = %r{https://github.com/([^/]+)/([^/]+)/archive/refs/tags/([^/]+)\.zip}
 
-    _, @owner, @repo, @tag, @filename = *@url.match(url_pattern)
+    if (m = @url.match(release_pattern))
+      @source_kind = :release_asset
+      _, @owner, @repo, @tag, @filename = *m
+    elsif (m = @url.match(tarball_pattern))
+      @source_kind = :tarball
+      _, @owner, @repo, @tag = *m
+    elsif (m = @url.match(zipball_pattern))
+      @source_kind = :zipball
+      _, @owner, @repo, @tag = *m
+    else
+      raise CurlDownloadStrategyError,
+            "Invalid url pattern: expected /releases/download/<tag>/<file> or /archive/refs/tags/<tag>.{tar.gz,zip}."
+    end
   end
 
   def download_url
-    uri = URI("https://api.github.com/repos/#{@owner}/#{@repo}/releases/assets/#{asset_id}")
+    case @source_kind
+    when :release_asset
+      resolve_redirect(URI("https://api.github.com/repos/#{@owner}/#{@repo}/releases/assets/#{asset_id}"),
+                       accept: "application/octet-stream")
+    when :tarball
+      resolve_redirect(URI("https://api.github.com/repos/#{@owner}/#{@repo}/tarball/#{@tag}"))
+    when :zipball
+      resolve_redirect(URI("https://api.github.com/repos/#{@owner}/#{@repo}/zipball/#{@tag}"))
+    end
+  rescue StandardError => e
+    raise CurlDownloadStrategyError, "Failed to get download URL: #{e.message}"
+  end
+
+  def resolve_redirect(uri, accept: nil)
     req = Net::HTTP::Get.new(uri)
-    req["Accept"] = "application/octet-stream"
+    req["Accept"] = accept if accept
     req["Authorization"] = "Bearer #{github_token}"
 
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
@@ -32,8 +56,6 @@ class PrivateGitHubDownloadStrategy < CurlDownloadStrategy
     else
       raise CurlDownloadStrategyError, "Failed to get download URL: #{res.code} #{res.message}"
     end
-  rescue StandardError => e
-    raise CurlDownloadStrategyError, "Failed to get download URL: #{e.message}"
   end
 
   private
