@@ -1,8 +1,8 @@
 require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 
 cask "pingmeter" do
-  version "0.0.6"
-  sha256 "75f632116f103ff614eb66f434a7d9f748c65f4d48cf307e50a3c10d7e874211"
+  version "0.0.7"
+  sha256 "276ec6744d798f6b441c255049a0da73bbdbae6c02918f19bf19f1eccdea7e7b"
 
   url "https://github.com/uatec/pingmeter/releases/download/v#{version}/PingMeter.zip",
       using: PrivateGitHubDownloadStrategy
