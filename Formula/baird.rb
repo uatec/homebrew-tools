@@ -3,10 +3,10 @@ require (Tap.fetch("uatec/tools").path/"lib/private_strategy").to_s
 class Baird < Formula
   desc "Fully integrated tv and streaming media player"
   homepage "https://github.com/uatec/baird"
-  url "https://github.com/uatec/baird/releases/download/v0.0.265/Baird-linux-arm64.zip",
+  url "https://github.com/uatec/baird/releases/download/v0.0.266/Baird-linux-arm64.zip",
       using: PrivateGitHubDownloadStrategy
-  version "0.0.265"
-  sha256 "206c73be575da45170a86cb3b8c551e8a611b15758fd9bba9716c88b61e7a50f"
+  version "0.0.266"
+  sha256 "592c35105dcf0f241bd3313ae69acb0c5b34db3d995ea0d39cb6556ff337f78c"
 
 
     # depends_on "libgbm1"
